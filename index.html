@@ -1,0 +1,404 @@
+<!DOCTYPE html><html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Librus Synergia — Knockoff (Dzienny plan)</title>
+  <style>
+    :root{
+      --bg:#0f1115;         /* tło aplikacji */
+      --panel:#161a22;      /* panele i navbar */
+      --panel-2:#1c2230;    /* boczny panel */
+      --text:#e8ecf3;       /* tekst główny */
+      --muted:#9aa7bd;      /* tekst drugorzędny */
+      --accent:#2f81f7;     /* akcent/ikony */
+      --grid:#222a39;       /* linie siatki godzin */
+      --chip:#0b0e14;       /* małe przyciski */
+      --radius:14px;
+      --shadow:0 6px 20px rgba(0,0,0,.45);
+      --hour-h: 72px;       /* wysokość 1 godziny w pikselach */
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;}
+    body{
+      margin:0; background:var(--bg); color:var(--text); font: 500 16px/1.4 system-ui,Segoe UI,Roboto,Helvetica,Arial;
+      display:flex; min-height:100dvh; overflow:hidden;
+    }/* ——— Left drawer (hamburger) ——— */
+.drawer{width:340px; background:var(--panel-2); border-right:1px solid #0f1420; box-shadow:var(--shadow); height:100dvh; position:fixed; inset:0 auto 0 0; transform:translateX(-100%); transition:.25s ease; z-index:30;}
+.drawer.open{transform:translateX(0)}
+.drawer header{padding:18px 18px 8px; border-bottom:1px solid #20283a; position:sticky; top:0; background:inherit; z-index:5}
+.drawer h2{margin:0; font-size:18px}
+.drawer .small{color:var(--muted); font-weight:600; letter-spacing:.3px; font-size:12px}
+.drawer .content{padding:16px; height:calc(100% - 78px); overflow:auto}
+
+label{display:block; font-size:12px; color:var(--muted); margin:12px 0 6px}
+input, select, textarea{
+  width:100%; background:#0f1420; border:1px solid #27314a; color:var(--text); padding:12px 12px; border-radius:12px; outline:none;
+}
+input[type="color"]{height:44px; padding:0 6px}
+textarea{min-height:72px; resize:vertical}
+
+.row{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+.actions{display:flex; gap:10px; margin-top:14px; flex-wrap:wrap}
+.btn{appearance:none; border:none; padding:10px 14px; border-radius:12px; font-weight:700; cursor:pointer; background:#0b1220; color:var(--text); border:1px solid #27314a}
+.btn.primary{background:var(--accent); border-color:transparent; color:#fff}
+.btn.ghost{background:transparent}
+.btn.danger{background:#2a0f14; border-color:#4a1b23}
+
+.divider{height:1px; background:#20283a; margin:16px 0}
+
+/* ——— App shell ——— */
+.shell{flex:1; display:flex; flex-direction:column; min-width:0}
+.topbar{height:56px; background:var(--panel); display:flex; align-items:center; gap:12px; padding:0 12px; border-bottom:1px solid #0f1420}
+.hamb{width:42px; height:42px; border-radius:12px; background:var(--chip); display:grid; place-items:center; cursor:pointer;}
+.hamb span{display:block; width:20px; height:2px; background:var(--text); position:relative}
+.hamb span:before,.hamb span:after{content:""; position:absolute; inset:0; height:2px; width:20px; background:var(--text)}
+.hamb span:before{transform:translateY(-6px)}
+.hamb span:after{transform:translateY(6px)}
+
+.brand{font-weight:800; letter-spacing:.2px}
+.spacer{flex:1}
+
+.todaybar{display:flex; align-items:center; gap:10px; background:var(--panel); padding:12px; border-bottom:1px solid #0f1420}
+.navbtn{background:#0b1220; border:1px solid #27314a; color:var(--text); border-radius:10px; width:36px; height:36px; display:grid; place-items:center; cursor:pointer}
+.date-title{font-size:18px; font-weight:800}
+
+.controls{margin-left:auto; display:flex; gap:10px; align-items:center}
+.controls input[type="date"]{width:auto}
+
+/* ——— Day grid ——— */
+.grid-wrap{flex:1; display:grid; grid-template-columns:80px 1fr; overflow:auto}
+.hours{background:linear-gradient(#0d1119, #0d1119); border-right:1px solid #0f1420}
+.hours .h{height:var(--hour-h); border-bottom:1px solid var(--grid); color:var(--muted); display:flex; align-items:flex-start; justify-content:flex-end; padding:8px 12px; font-variant-numeric:tabular-nums;}
+
+.day{position:relative; background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,0));}
+.day .row-line{position:absolute; left:0; right:0; height:1px; background:var(--grid)}
+
+.event{position:absolute; left:16px; right:16px; padding:10px 12px; border-radius:16px; color:#fff; font-weight:800; box-shadow:0 8px 20px rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.08); cursor:pointer}
+.event .meta{font-weight:600; opacity:.9; font-size:12px}
+
+.legend{position:sticky; bottom:0; margin:0; padding:8px 12px; display:flex; gap:10px; align-items:center; background:linear-gradient(180deg, rgba(15,17,21,0), rgba(15,17,21,.9) 18%, rgba(15,17,21,1) 60%)}
+.pill{padding:6px 10px; border-radius:999px; font-size:12px; border:1px solid #27314a; background:#0b1220; color:var(--muted)}
+
+/* Dialog */
+dialog{border:none; border-radius:14px; background:var(--panel); color:var(--text); padding:0; box-shadow:var(--shadow)}
+dialog::backdrop{background:rgba(0,0,0,.55)}
+.dlg-h{padding:14px 16px; border-bottom:1px solid #20283a; font-weight:800}
+.dlg-b{padding:14px 16px}
+.dlg-f{display:flex; gap:10px; justify-content:flex-end; padding:14px 16px; border-top:1px solid #20283a}
+
+@media (max-width:920px){
+  .grid-wrap{grid-template-columns:64px 1fr}
+  :root{--hour-h:64px}
+}
+
+  </style>
+</head>
+<body>
+  <!-- Drawer: Add / Manage lessons -->
+  <aside class="drawer" id="drawer">
+    <header>
+      <h2>Dodaj lekcję</h2>
+      <div class="small">Wprowadź dane i kliknij „Zapisz”.</div>
+    </header>
+    <div class="content">
+      <div class="row">
+        <div>
+          <label for="date">Data</label>
+          <input type="date" id="date">
+        </div>
+        <div>
+          <label for="color">Kolor</label>
+          <input type="color" id="color" value="#e91e63" />
+        </div>
+      </div><label for="title">Przedmiot (tytuł)</label>
+  <input id="title" placeholder="np. Fizyka" />
+
+  <div class="row">
+    <div>
+      <label for="start">Początek</label>
+      <input id="start" type="time" value="08:00" />
+    </div>
+    <div>
+      <label for="end">Koniec</label>
+      <input id="end" type="time" value="08:45" />
+    </div>
+  </div>
+
+  <div class="row">
+    <div>
+      <label for="room">Sala</label>
+      <input id="room" placeholder="np. 214" />
+    </div>
+    <div>
+      <label for="teacher">Nauczyciel</label>
+      <input id="teacher" placeholder="np. p. Kowalski" />
+    </div>
+  </div>
+
+  <label for="notes">Uwagi (opcjonalnie)</label>
+  <textarea id="notes" placeholder="Sprawdzian z rozdz. 3"></textarea>
+
+  <div class="actions">
+    <button class="btn primary" id="save">Zapisz</button>
+    <button class="btn" id="new">Nowy wpis</button>
+    <button class="btn ghost" id="exportBtn">Eksport JSON</button>
+    <button class="btn ghost" id="importBtn">Import JSON</button>
+    <button class="btn danger" id="clearDay">Wyczyść ten dzień</button>
+    <button class="btn danger" id="clearAll">Wyczyść wszystko</button>
+  </div>
+
+  <div class="divider"></div>
+  <div class="small">Porada: Kliknij lekcję w widoku dnia, aby ją usunąć.</div>
+</div>
+
+  </aside>  <!-- App shell -->  <main class="shell">
+    <div class="topbar">
+      <div class="hamb" id="hamb"><span></span></div>
+      <div class="brand">Librus • Knockoff</div>
+      <div class="spacer"></div>
+      <div class="pill">Tryb: Dzień</div>
+    </div><div class="todaybar">
+  <button class="navbtn" id="prev">◀</button>
+  <div class="date-title" id="dateTitle">Poniedziałek, 27 października 2025</div>
+  <button class="navbtn" id="next">▶</button>
+
+  <div class="controls">
+    <input type="date" id="pick" />
+    <button class="btn" id="todayBtn">Dzisiaj</button>
+  </div>
+</div>
+
+<section class="grid-wrap">
+  <!-- Hour column -->
+  <div class="hours" id="hours"></div>
+
+  <!-- Day canvas -->
+  <div class="day" id="day"></div>
+</section>
+
+<p class="legend">
+  <span class="pill">Dodawaj lekcje z menu ☰</span>
+  <span class="pill">Dane zapisywane są w LocalStorage</span>
+</p>
+
+  </main>  <dialog id="evtDlg">
+    <div class="dlg-h">Szczegóły lekcji</div>
+    <div class="dlg-b" id="dlgBody"></div>
+    <div class="dlg-f">
+      <button class="btn danger" id="delEvt">Usuń</button>
+      <button class="btn" id="closeDlg">Zamknij</button>
+    </div>
+  </dialog><script>
+(() => {
+  // —— CONFIG ——
+  const START_HOUR = 8; // początek dnia (8:00)
+  const END_HOUR   = 16; // koniec dnia (16:00)
+  const HOUR_H = () => parseInt(getComputedStyle(document.documentElement).getPropertyValue('--hour-h'));
+
+  // —— STATE ——
+  const state = {
+    date: new Date(), // aktualnie wyświetlany dzień
+    data: loadAll()   // { 'YYYY-MM-DD': [ {id,title,start,end,room,teacher,color,notes} ] }
+  };
+
+  // —— ELEMENTS ——
+  const drawer = document.getElementById('drawer');
+  const hamb   = document.getElementById('hamb');
+  const hoursEl= document.getElementById('hours');
+  const dayEl  = document.getElementById('day');
+  const titleEl= document.getElementById('dateTitle');
+  const pickEl = document.getElementById('pick');
+  const prevEl = document.getElementById('prev');
+  const nextEl = document.getElementById('next');
+  const todayBtn = document.getElementById('todayBtn');
+
+  // Drawer form controls
+  const f = {
+    date: document.getElementById('date'),
+    color: document.getElementById('color'),
+    title: document.getElementById('title'),
+    start: document.getElementById('start'),
+    end: document.getElementById('end'),
+    room: document.getElementById('room'),
+    teacher: document.getElementById('teacher'),
+    notes: document.getElementById('notes'),
+  };
+  const btn = {
+    save: document.getElementById('save'),
+    fresh: document.getElementById('new'),
+    clearDay: document.getElementById('clearDay'),
+    clearAll: document.getElementById('clearAll'),
+    exportBtn: document.getElementById('exportBtn'),
+    importBtn: document.getElementById('importBtn')
+  };
+
+  // Dialog for deleting
+  const dlg = document.getElementById('evtDlg');
+  const dlgBody = document.getElementById('dlgBody');
+  const dlgDel  = document.getElementById('delEvt');
+  const dlgClose= document.getElementById('closeDlg');
+  let selectedEvt = null;
+
+  // —— INIT ——
+  buildHourGrid();
+  syncPickers();
+  renderDay();
+
+  // Drawer toggle
+  hamb.addEventListener('click', () => drawer.classList.toggle('open'));
+
+  // Day navigation
+  prevEl.addEventListener('click', () => { shiftDay(-1); });
+  nextEl.addEventListener('click', () => { shiftDay(1); });
+  todayBtn.addEventListener('click', () => { state.date = new Date(); syncPickers(); renderDay(); });
+  pickEl.addEventListener('change', () => { state.date = new Date(pickEl.value); syncPickers(); renderDay(); });
+
+  // Form actions
+  btn.save.addEventListener('click', saveLesson);
+  btn.fresh.addEventListener('click', () => clearForm());
+  btn.clearDay.addEventListener('click', () => { if(confirm('Usunąć wszystkie lekcje z wybranego dnia?')){ setDay(dateKey(f.date.value), []); renderDay(); }});
+  btn.clearAll.addEventListener('click', () => { if(confirm('Usunąć WSZYSTKO?')){ state.data = {}; persist(); renderDay(); }});
+  btn.exportBtn.addEventListener('click', exportJSON);
+  btn.importBtn.addEventListener('click', importJSON);
+
+  dlgClose.addEventListener('click', () => dlg.close());
+  dlgDel.addEventListener('click', () => { if(!selectedEvt) return; const list = getDay(dateKey(state.date)); const i = list.findIndex(e => e.id===selectedEvt.id); if(i>-1){ list.splice(i,1); setDay(dateKey(state.date), list); } dlg.close(); renderDay(); });
+
+  // —— FUNCTIONS ——
+  function dateKey(d){
+    if(typeof d === 'string') return d; // already a key
+    const dt = d instanceof Date ? d : new Date(d);
+    return dt.toISOString().slice(0,10);
+  }
+  function loadAll(){
+    try{ return JSON.parse(localStorage.getItem('librus_knockoff')||'{}'); }catch(e){ return {}; }
+  }
+  function persist(){ localStorage.setItem('librus_knockoff', JSON.stringify(state.data)); }
+  function getDay(key){ return state.data[key] || []; }
+  function setDay(key, arr){ state.data[key] = arr; persist(); }
+
+  function buildHourGrid(){
+    hoursEl.innerHTML = '';
+    for(let h=START_HOUR; h<=END_HOUR; h++){
+      const div = document.createElement('div');
+      div.className = 'h';
+      div.textContent = `${String(h).padStart(2,'0')}:00`;
+      hoursEl.appendChild(div);
+    }
+    // background horizontal lines
+    dayEl.innerHTML = '';
+    for(let h=START_HOUR; h<=END_HOUR; h++){
+      const line = document.createElement('div');
+      line.className = 'row-line';
+      line.style.top = ((h-START_HOUR)*HOUR_H()) + 'px';
+      dayEl.appendChild(line);
+    }
+    dayEl.style.height = ((END_HOUR-START_HOUR+1)*HOUR_H()) + 'px';
+  }
+
+  function syncPickers(){
+    const key = dateKey(state.date);
+    pickEl.value = key;
+    f.date.value = key;
+    titleEl.textContent = formatLong(state.date);
+  }
+
+  function shiftDay(delta){
+    const d = new Date(state.date);
+    d.setDate(d.getDate()+delta);
+    state.date = d; syncPickers(); renderDay();
+  }
+
+  function minutesSinceStart(t){ // t = "HH:MM"
+    const [H,M] = t.split(':').map(Number);
+    return (H - START_HOUR) * 60 + M;
+  }
+  function px(minutes){
+    return minutes * (HOUR_H()/60);
+  }
+
+  function renderDay(){
+    // clear events but keep grid lines
+    [...dayEl.querySelectorAll('.event')].forEach(n => n.remove());
+
+    const list = getDay(dateKey(state.date)).slice().sort((a,b)=>a.start.localeCompare(b.start));
+    for(const e of list){
+      const el = document.createElement('div');
+      el.className = 'event';
+      el.style.background = e.color || '#556';
+      const top = px( minutesSinceStart(e.start) );
+      const height = px( timeDiffMin(e.start, e.end) );
+      el.style.top = Math.max(0, top+4) + 'px';
+      el.style.height = Math.max(36, height-8) + 'px';
+      el.innerHTML = `<div>${escapeHTML(e.title||'Lekcja')}</div><div class="meta">${e.start}–${e.end}${e.room? ' • sala '+escapeHTML(e.room):''}${e.teacher? ' • '+escapeHTML(e.teacher):''}</div>`;
+      el.addEventListener('click', () => openEvtDlg(e));
+      dayEl.appendChild(el);
+    }
+  }
+
+  function openEvtDlg(e){
+    selectedEvt = e;
+    dlgBody.innerHTML = `<b>${escapeHTML(e.title)}</b><br>${e.start}–${e.end}<br>${e.room?('Sala: '+escapeHTML(e.room)+'<br>'):''}${e.teacher?('Nauczyciel: '+escapeHTML(e.teacher)+'<br>'):''}${e.notes?('<br>'+escapeHTML(e.notes)):'')}`;
+    dlg.showModal();
+  }
+
+  function clearForm(){
+    f.title.value=''; f.room.value=''; f.teacher.value=''; f.notes.value='';
+    f.start.value='08:00'; f.end.value='08:45';
+  }
+
+  function saveLesson(){
+    const key = dateKey(f.date.value || state.date);
+    const title = f.title.value.trim();
+    if(!title){ alert('Podaj nazwę przedmiotu.'); return; }
+    const start = f.start.value, end = f.end.value;
+    if(!start || !end || start>=end){ alert('Sprawdź godziny (koniec po początku).'); return; }
+    const entry = {
+      id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random()),
+      title, start, end,
+      room: f.room.value.trim(), teacher: f.teacher.value.trim(),
+      color: f.color.value, notes: f.notes.value.trim()
+    };
+    const list = getDay(key);
+    list.push(entry);
+    setDay(key, list);
+    // if saving for current day – rerender
+    if(key === dateKey(state.date)) renderDay();
+    // quality of life
+    drawer.classList.remove('open');
+    clearForm();
+  }
+
+  function exportJSON(){
+    const blob = new Blob([JSON.stringify(state.data, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = Object.assign(document.createElement('a'), {href:url, download:'librus-data.json'});
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  }
+  function importJSON(){
+    const inp = Object.assign(document.createElement('input'), {type:'file', accept:'application/json'});
+    inp.onchange = () => {
+      const file = inp.files[0]; if(!file) return;
+      const reader = new FileReader();
+      reader.onload = () => { try{ state.data = JSON.parse(reader.result); persist(); renderDay(); } catch(e){ alert('Nieprawidłowy JSON'); } };
+      reader.readAsText(file);
+    };
+    inp.click();
+  }
+
+  function timeDiffMin(a,b){
+    const [h1,m1]=a.split(':').map(Number); const [h2,m2]=b.split(':').map(Number);
+    return (h2*60+m2)-(h1*60+m1);
+  }
+
+  function formatLong(d){
+    const days=['Niedziela','Poniedziałek','Wtorek','Środa','Czwartek','Piątek','Sobota'];
+    const months=['stycznia','lutego','marca','kwietnia','maja','czerwca','lipca','sierpnia','września','października','listopada','grudnia'];
+    return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  }
+
+  function escapeHTML(s){ return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m])); }
+})();
+</script></body>
+</html>
